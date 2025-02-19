@@ -106,4 +106,20 @@ spec:
     - name: patroni
       port: 8008
       targetPort: 8008
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: patroni-leader
+  namespace: keycloak
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+    role: leader  # Patroni automatically assigns this label to the leader
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
 
