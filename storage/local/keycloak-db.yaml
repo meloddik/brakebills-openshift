@@ -20,4 +20,49 @@ spec:
           operator: In
           values:
           - compute0.ocp4.brakebills.io  # Specify the node name
-
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: keycloak-db-1
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /opt/storage/keycloak-db-1  # Use the custom path
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - compute1.ocp4.brakebills.io  # Specify the node name
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: keycloak-db-2
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /opt/storage/keycloak-db-2  # Use the custom path
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - compute1.ocp4.brakebills.io  # Specify the node name
