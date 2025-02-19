@@ -13,6 +13,8 @@ spec:
       app: postgres
   template:
     metadata:
+      annotations:
+        alpha.image.policy.openshift.io/resolve-names: '*'
       labels:
         app: postgres
     spec:
