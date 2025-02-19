@@ -91,6 +91,8 @@ kind: Service
 metadata:
   name: postgres
   namespace: keycloak
+  labels:
+    app: postgres
 spec:
   clusterIP: None  # Headless service
   selector:
