@@ -65,4 +65,4 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - compute1.ocp4.brakebills.io  # Specify the node name
+          - compute2.ocp4.brakebills.io  # Specify the node name
