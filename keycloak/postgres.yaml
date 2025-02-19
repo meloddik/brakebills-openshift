@@ -1,27 +1,13 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: keycloak
-  labels:
-    app: postgres
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  storageClassName: local-storage
----
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: postgres
   namespace: keycloak
   labels:
     app: postgres
 spec:
-  replicas: 1
+  serviceName: postgres
+  replicas: 3  # Number of PostgreSQL nodes
   selector:
     matchLabels:
       app: postgres
@@ -30,52 +16,90 @@ spec:
       labels:
         app: postgres
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: postgres
+                topologyKey: "kubernetes.io/hostname"
       containers:
         - name: postgres
-          image: postgres
-          args:
-            - "-c"
-            - "max_connections=1000"
-            - "-c"
-            - "shared_buffers=1024"
+          image: patroni:latest  # Replace with your Patroni image
+          ports:
+            - containerPort: 5432
+              name: postgresql
+            - containerPort: 8008
+              name: patroni
           env:
-            - name: PGDATA
-              value: /var/lib/postgresql/data/pgdata
-            - name: POSTGRES_USER
+            - name: PATRONI_SCOPE
+              value: "postgres-keycloak"
+            - name: PATRONI_POSTGRESQL_LISTEN
+              value: "0.0.0.0:5432"
+            - name: PATRONI_RESTAPI_LISTEN
+              value: "0.0.0.0:8008"
+            - name: PATRONI_DCS
+              value: "kubernetes"
+            - name: PATRONI_KUBERNETES_NAMESPACE
+              value: "keycloak"
+            - name: PATRONI_KUBERNETES_LABELS
+              value: '{ "app": "postgres" }'
+            - name: POSTGRESQL_REPLICATION_USER
+              value: "replicator"
+            - name: POSTGRESQL_REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: replication-password
+            - name: PATRONI_POSTGRESQL_DATA_DIR
+              value: "/var/lib/postgresql/data/pgdata"
+            - name: PATRONI_SUPERUSER_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: keycloak-db-creds
                   key: db-username
-            - name: POSTGRES_PASSWORD
+            - name: PATRONI_SUPERUSER_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: keycloak-db-creds
                   key: db-pass
-            - name: POSTGRES_DB
-              value: "keycloak"
-          ports:
-            - containerPort: 5432
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
               subpath: pgdata
-      volumes:
-        - name: postgres-storage
-          persistentVolumeClaim:
-            claimName: postgres-pvc
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: local-storage
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: postgres
   namespace: keycloak
-  labels:
-    app: postgres
 spec:
+  clusterIP: None  # Headless service
   selector:
     app: postgres
   ports:
-    - protocol: TCP
+    - name: postgresql
       port: 5432
       targetPort: 5432
-  type: ClusterIP
+    - name: patroni
+      port: 8008
+      targetPort: 8008
+
