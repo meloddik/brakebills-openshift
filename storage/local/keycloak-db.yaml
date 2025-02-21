@@ -91,7 +91,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   local:
-    path: /opt/storage/kycloak-maxscale-0 # Use the custom path
+    path: /opt/storage/keycloak-maxscale-0 # Use the custom path
   nodeAffinity:
     required:
       nodeSelectorTerms:
