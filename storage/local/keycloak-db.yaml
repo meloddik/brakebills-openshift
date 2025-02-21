@@ -1,3 +1,14 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true" # Set this as default StorageClass
+provisioner: openshift.org/local-storage # The provisioner for local storage
+reclaimPolicy: Retain # Keep the volume after PVC deletion
+volumeBindingMode: WaitForFirstConsumer # Delay volume binding until pod scheduling
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -11,15 +22,15 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   local:
-    path: /opt/storage/keycloak-db  # Use the custom path
+    path: /opt/storage/keycloak-db # Use the custom path
   nodeAffinity:
     required:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - compute0.ocp4.brakebills.io  # Specify the node name
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - compute0.ocp4.brakebills.io # Specify the node name
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -34,15 +45,15 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   local:
-    path: /opt/storage/keycloak-db-1  # Use the custom path
+    path: /opt/storage/keycloak-db-1 # Use the custom path
   nodeAffinity:
     required:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - compute1.ocp4.brakebills.io  # Specify the node name
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - compute1.ocp4.brakebills.io # Specify the node name
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -57,12 +68,35 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   local:
-    path: /opt/storage/keycloak-db-2  # Use the custom path
+    path: /opt/storage/keycloak-db-2 # Use the custom path
   nodeAffinity:
     required:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - compute2.ocp4.brakebills.io  # Specify the node name
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - compute2.ocp4.brakebills.io # Specify the node name
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: keycloak-maxscale-0
+spec:
+  capacity:
+    storage: 100Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /opt/storage/kycloak-maxscale-0 # Use the custom path
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - compute3.ocp4.brakebills.io # Specify the node name
